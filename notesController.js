@@ -1,7 +1,6 @@
 const fs = require('fs/promises')
 const path = require('path')
 const chalk = require('chalk')
-const { raw } = require('express')
 
 const notesPath = path.join(__dirname, 'db.json')
 
@@ -30,7 +29,7 @@ async function getNotes() {
 
 async function printNotes() {
   const notes = await getNotes()
-  
+
   console.log(chalk.bgBlue('List of notes:'))
   notes.forEach(note => console.log(chalk.blue(note.id + ' ' + note.title)))
 }
