@@ -1,6 +1,7 @@
 const fs = require('fs/promises')
 const path = require('path')
 const chalk = require('chalk')
+const { raw } = require('express')
 
 const notesPath = path.join(__dirname, 'db.json')
 
@@ -34,17 +35,21 @@ async function printNotes() {
   notes.forEach(note => console.log(chalk.blue(note.id + ' ' + note.title)))
 }
 
+async function updateNote(id, note) {
+  const notes = await getNotes()
+  await setNotes(notes.map(n => n.id === id ? { ...n, ...note } : n))
+  console.log(chalk.yellow(`Note with id ${id} was updated\n`))
+}
+
 async function removeNote(id) {
   const notes = await getNotes()
-
   await setNotes(notes.filter(note => note.id !== id))
   console.log(chalk.red(`Note with id ${id} was deleted\n`))
-  await printNotes()
 }
 
 module.exports = {
   addNote,
-  setNotes,
-  printNotes,
+  getNotes,
+  updateNote,
   removeNote
 }

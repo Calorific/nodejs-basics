@@ -1,37 +1,56 @@
-const http = require('http')
+const express = require('express')
 const chalk = require('chalk')
-const fs = require('fs/promises')
-const path = require('path')
-const { addNote } = require('./notesController')
+const { addNote, getNotes, removeNote, updateNote } = require('./notesController')
+const { resolve } = require('path')
 
-const basePath = path.join(__dirname, 'pages')
 const port = 3000
 
-const server = http.createServer(async (req, res) => {
-  if (req.method === 'GET') {
-    const content = await fs.readFile(path.join(basePath, 'index.html'))
-    res.setHeader('Content-Type', 'text/html')
-    res.writeHead(200)
-    res.end(content)
-  }
+const app = express()
 
-  else if (req.method === 'POST') {
-    const body = []
-    res.writeHead(200, {
-      'Content-Type': 'text/plain, charset=utf-8'
-    })
+app.set('view engine', 'ejs')
+app.set('views', 'pages')
 
-    req.on('data', data => {
-      body.push(Buffer.from(data))
-    })
+app.use(express.static(resolve(__dirname, 'public')))
 
-    req.on('end', async () => {
-      const title = body.toString().split('=')[1].replaceAll('+', ' ')
-      await addNote(title)
+app.use(express.json())
 
-      res.end(`Title = ${title}`)
-    })
-  }
+app.use(express.urlencoded({
+  extended: true
+}))
+
+app.get('/', async (req, res) => {
+  res.render('index', {
+    title: 'Express App',
+    notes: await getNotes(),
+    created: false
+  })
 })
 
-server.listen(port, () => console.log(chalk.green(`Server has been started on port ${port}`)))
+app.post('/', async (req, res) => {
+  await addNote(req.body.title)
+  res.render('index', {
+    title: 'Express App',
+    notes: await getNotes(),
+    created: true
+  })
+})
+
+app.put('/:id', async (req, res) => {
+  await updateNote(req.params.id, req.body)
+  res.render('index', {
+    title: 'Express App',
+    notes: await getNotes(),
+    created: true
+  })
+})
+
+app.delete('/:id', async (req, res) => {
+  await removeNote(req.params.id)
+  res.render('index', {
+    title: 'Express App',
+    notes: await getNotes(),
+    created: true
+  })
+})
+
+app.listen(port, () => console.log(chalk.green(`Server has been started on port ${port}`)))
